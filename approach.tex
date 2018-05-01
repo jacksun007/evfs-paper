@@ -1,0 +1,119 @@
+\begin{table*}
+\begin{centering}
+\begin{small}
+\begin{tabular}[t]{|l|l|}
+\hline 
+Function Prototype & Description \\
+\hline
+\hline
+\texttt{struct evfs * fs\_open(struct evfs\_mount * mnt)} & open the file system with parameters specified by \textit{mnt} \\
+\hline
+\hline
+\texttt{long super\_make(struct evfs\_super * sup)} & make a new file system with parameters specified by \textit{sup} \\
+\hline
+\texttt{long super\_set(struct evfs\_super * sup)} & update an existing file system's settings \\
+\hline
+\hline 
+\texttt{long extent\_alloc(long addr, long len)} & allocate the extent defined by \{\textit{addr}, \textit{len}\} \\
+\hline 
+\texttt{long extent\_free(long addr, long len)} & free the extent defined by \{\textit{addr}, \textit{len}\} \\
+\hline 
+% (jsun): removed because not discussed or motivated in approach section
+%\texttt{long extent\_write(long addr, long len, char * data)} & write \textit{data} to the extent defined by \{\textit{addr}, \textit{len}\} \\
+%\hline 
+%\texttt{long extent\_read(long addr, long len, char * data)} & read \textit{data} from the extent defined by \{\textit{addr}, \textit{len}\} \\
+%\hline 
+\makecell[l]{\texttt{long extent\_reverse(long addr, long len,} \\
+\hspace{1em}\texttt{struct evfs\_reverse * rv)}} & \makecell[l]{fills \textit{rv} with the inode number and logical offset of \\ all inodes that map to the extent defined by \{\textit{addr}, \textit{len}\}} \\
+\hline 
+\texttt{int extent\_active(long addr, long len)} & return 1 if extent defined by \{\textit{addr}, \textit{len}\} is active, else 0 \\
+\hline 
+\makecell[l]{\texttt{long extent\_iterate(long ino\_nr, void * priv,} \\ 
+\hspace{1em}\texttt{long (* cb)(long log\_blk\_nr, long phy\_blk\_nr,} \\
+\hspace{7.25em}\texttt{long len, void * priv))}} & \makecell[l]{iterate through all extents mapped to inode \textit{ino\_nr} in \\ the form of \{\textit{log\_blk\_nr}, \textit{len}\} $\rightarrow$ \{\textit{phy\_blk\_nr}, \textit{len}\} \\ and process them via callback function \textit{cb}} \\
+\hline 
+\makecell[l]{\texttt{long freesp\_iterate(void * priv, long (* cb)(} \\ 
+\hspace{1em}\texttt{long addr, long len, void * priv))}} & \makecell[l]{iterate through all free space extents in the file system \\ and process them via callback function \textit{cb}} \\
+\hline
+\hline
+\texttt{long inode\_alloc(long ino\_nr, struct evfs\_inode * i)} & allocate the inode \textit{ino\_nr} with the inode structure \textit{i} \\
+\hline 
+\texttt{long inode\_free(long ino\_nr)} & free the inode \textit{ino\_nr} \\
+\hline 
+%\texttt{long inode\_set(long ino\_nr, struct evfs\_inode * i)} & set the inode \textit{ino\_nr} with the inode structure \textit{i} \\
+%\hline
+% (jsun): removed because not significant
+%\texttt{long inode\_read(long ino\_nr, char * data, long len)} & read \textit{len} byte of data to \textit{data} from the inode \textit{ino\_nr} \\
+%\hline 
+%\makecell[l]{\texttt{long inode\_write(long ino\_nr, long ofs, char * data,} \\
+%\hspace{1em}\texttt{long len)}} & \makecell[l]{write \textit{data} of \textit{len} byte to the inode \textit{ino\_nr} at logical \\ offset \textit{ofs}} \\
+%\hline 
+\makecell[l]{\texttt{long inode\_map(long ino\_nr, long log\_blk\_nr,} \\
+\hspace{1em}\texttt{long phy\_blk\_nr, long len)}} & \makecell[l]{map physical extent \{\textit{phy\_blk\_nr}, \textit{len}\} to the logical \\ extent \{\textit{log\_blk\_nr}, \textit{len}\} for inode \textit{ino\_nr}} \\
+\hline 
+\makecell[l]{\texttt{long inode\_unmap(long ino\_nr, long addr, long len)}} & \makecell[l]{unmap logical extent \{\textit{addr}, \textit{len}\} for inode \textit{ino\_nr}} \\
+\hline
+% (jsun): removed because not discussed or motivated in approach section
+%\texttt{long inode\_truncate(long ino\_nr, long nblks)} & reduce the number of used blocks for %\textit{ino\_nr} to \textit{nblks} \\
+%\hline 
+%\texttt{int inode\_active(long ino\_nr)} & returns 1 if inode \textit{ino\_nr} is active, else 0 \\
+%\hline 
+\makecell[l]{\texttt{long inode\_iterate(void * priv, long (* cb)(} \\ 
+\hspace{1em}\texttt{long ino\_nr, struct evfs\_inode * i, void * priv))}} & \makecell[l]{iterate through all active inodes in the file system and \\ process them via callback function \textit{cb}} \\
+\hline
+\hline
+\texttt{long dirent\_add(long dir\_nr, struct evfs\_dirent * d)} & add a new entry \textit{d} to directory inode \textit{dir\_nr} \\
+\hline 
+%\texttt{long dirent\_remove(long dir\_nr, long ino\_nr)} & remove entry \textit{ino\_nr} from directory inode \textit{dir\_nr} \\
+%\hline 
+% (jsun): removed because not significant
+%\texttt{long dirent\_active(long dir\_nr, long ino\_nr)} & returns 1 if entry \textit{ino\_nr} exists in \textit{dir\_nr}, else 0 \\
+%\hline 
+\makecell[l]{\texttt{long dirent\_iterate(long dir\_nr, void * priv,} \\ 
+\hspace{1em}\texttt{long (* cb)(struct evfs\_dirent * d, void * priv))}} & \makecell[l]{iterate through all directory entries for inode \textit{dir\_nr} \\ and process them via callback function \textit{cb}} \\
+\hline
+\hline
+\texttt{struct evfs\_txn * txn\_begin(struct evfs * evfs)} & start a new transaction and returns the associated handle \\
+\hline 
+\texttt{long txn\_commit(struct evfs\_txn * txn)} & commit the transaction \textit{txn} \\
+\hline 
+\texttt{long txn\_abort(struct evfs\_txn * txn)} & abort the transaction \textit{txn} \\
+\hline
+\end{tabular}
+\end{small}
+\par\end{centering}
+\vspace{-5pt}
+\caption{\label{tab:evfs-api}eVFS API. Parameter \texttt{struct evfs\_txn} is omitted for all functions except for \texttt{fs\_open} and the last 3 transaction-related functions.}
+\vspace{-6pt}
+\end{table*}
+
+\vspace{-0.5em}
+\section{Approach\label{sec:Approach}}
+
+The goal of designing the eVFS interface is to enable file-system agnostic management applications. As such, the interface must be generic while providing fine-grained control over the allocation of file system objects, and mappings from one object to another (e.g. directory entries to files, files to blocks). Therefore, we must first define the various file system objects that are generic across file systems.
+
+At a high level, file systems manage four types of objects: files or directories, blocks or extents, directory entries, and file-system wide settings (such as the block size, file system size, or label). Thus, we provide an interface for managing each of the objects, and any mappings between them. In this section, we motivate the eVFS design by describing use cases for accessing and manipulating these objects, including the need for transactional support.
+
+\paragraph{Inodes} In the eVFS interface, similar to VFS, every file system object, such as a file or directory, is uniquely identified by an inode number and structure. File system management applications frequently need to read, create or update inode structures and their mappings to physical blocks.
+For example, a defragmentation tool needs to scatter-gather fragmented blocks of a file into a new contiguous extent, which involves updating the logical to physical block mappings of an inode. The eVFS interface thus provides support for allocating and updating an inode. The inode allocation interface is finer-grained than VFS file creation, since it does not allocate a directory entry or file blocks. The eVFS interface also allows mapping and unmapping logical offsets of a file to specific physical blocks, providing precise control over these mappings.
+
+\paragraph{Blocks and Extents} Many file system management applications require fine-grained control over the physical layout of a file on disk. For example, an in-place file system conversion tool needs to recreate files on the destination file system that directly map to existing data blocks belonging to the same files on the source file system, while avoiding copying blocks as much as possible (see Section~\ref{subsec:conversion_tool} for more detail). Thus, the interface allows allocation of blocks and extents at specific physical addresses.
+
+To allocate blocks and extents, management applications need to know the locations and sizes of free spaces. Maintenance applications also require knowledge of the remaining free space in the file system to determine whether to start garbage collection. This information must be obtained by processing block allocation metadata and is thus a file-system specific operation. However, with eVFS, we abstract away the file-system specific details and provide a function that enables applications to iterate through all free space extents in a file system, or find the nearest available free extent, without needing to know the format of the file system. Similarly, the API allows applications to check whether an extent is currently in use.
+
+% This function helps the file system conversion tool detect when an extent must be copied elsewhere due to conflict.
+
+% (Ashvin): clarify the reason for the skip. given the reverse interface, is it always possible to move extents? clarify. the power of the reverse interface is not clear right now. In particular, for copy-on-write and log-structured file systems, moving a block might require updates to the parent, which requires progressively updating the parent pointers, etc. do we simplify that? support that?
+
+For file systems that support copy-on-write semantics and snapshots, management applications can make informed decisions based on whether an extent is private to a file or shared by multiple files. For example, it is easier to relocate private extents during garbage collection. To enable such logic, the interface supports retrieving a reverse mapping that lists the inodes and their logical offsets that map to a particular extent. With this information, a defragmentation tool can move an extent by remapping all inodes that reference the extent to its new location.
+
+\paragraph{Directory Entries} File systems use directory entries to support mapping name(s) to an inode. Consider our in-place file system conversion tool that needs to recreate directories. It must iterate through the entries in the source file system while making copies to the destination file system. Therefore, the interface supports adding, updating, or removing individual directory entries, as well as iterating through the entries of a directory inode.
+
+\paragraph{File-System Wide Settings} A file system stores various parameters and options that describe the file system format and the features that are supported. Some of these parameters are common across different file systems, such as the total size of the file system, block size, etc. Therefore, they can be exposed to support management applications that modify the layout or format of the file system (e.g., updating file system to a newer version, changing the block size of an existing file system).
+
+The eVFS interface provides generic support for managing file-system wide settings in two ways. First, it allows updating simple settings such as labels or file system feature flags that do not require restructuring the file system, similar to the functionality provided by \texttt{tune2fs}~\cite{tso-e2fsprogs} for the Ext3/Ext4 file systems. Second, to support generic restructuring, the interface provides support for creating an empty file system, that performs the same task as \texttt{mkfs}. As described later in more detail, this interface allows our in-place file system conversion tool to reformat the device to the destination file system, and then the new file system metadata can be recreated, while keeping the file contents of the existing file system intact. Similarly, a file system can be resized using this approach, although less efficiently than a custom file-system specific resizing tool.
+
+\paragraph{Transactions} Since many of the operations supported by the interface make the file system temporarily inconsistent, the interface also provides transactional support to ensure atomicity so that other applications do not see partial updates made by management applications. Transactional support is also necessary for providing crash consistency, which is often missing in management applications~\cite{gatla2018fsck}. Thus, eVFS also enables building robust management applications that are resilient to power failures.
+
+
+

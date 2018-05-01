@@ -1,0 +1,12 @@
+\vspace{-0.25em}
+\section{Limitations and Future Work\label{sec:Future_Work}}
+
+While our approach helps with building generic management applications, these applications will need to specifically handle file systems that support subsets of the eVFS API. For example, in-place update file systems, such as Ext4, generally do not track the reverse mapping from extents to inodes, and so cannot implement this API call efficiently. As a result, certain applications will either not be able to support these file systems, or will require different logic for such file systems.
+
+We are currently working on supporting several deployed VFS-based file systems, such as Btrfs and XFS. Since our API is generic, we believe it should be possible to extend it for non-VFS file systems as well.
+
+Our API is designed to provide control over extents, but these extents may be mapped to a non-linear physical address space. For example, modern file systems such as Btrfs and ZFS incorporate volume management and RAID-style redundancy within the file system, and thus the extents may map to physically discontiguous chunks of physical storage. Since some management applications may need control over these physical chunks as well, we plan to explore the feasibility of generically exposing this address space.
+
+Our eVFS API is extent-based, and so we believe that it should be possible for new non-volatile memory (NVM) file systems to implement the API, allowing them to benefit from management applications originally designed for traditional block-based storage.
+
+Our current eVFS implementation is designed for offline applications, and provides crash consistency support. For online applications, we plan to provide transactional support for eVFS operations. While a transactional file system would simplify this implementation, such file systems are not in common use because supporting transactions adds significant complexity to the entire kernel~\cite{Spillane2009}. Instead, our plan is to use an optimistic concurrency control scheme for committing eVFS operations in existing file systems. This approach will ensure that existing VFS applications are minimally affected by eVFS operations, even when eVFS applications may run long transactions. In turn, the eVFS applications must be designed to handle transaction aborts. Our implementation will take advantage of recent file system designs that use multiple operation logs, track dependencies between operations, and merge the operations~\cite{Pillai2017, Bhat2017}.

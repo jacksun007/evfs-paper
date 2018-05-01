@@ -1,0 +1,31 @@
+\subsection{eVFS API\label{subsec:evfs}}
+
+Table~\ref{tab:evfs-api} shows the complete set of functions in the eVFS API. The operations are split into five categories, based on functionality and the file system resource that is being accessed or modified. 
+
+\paragraph{File-System Wide Functions} \texttt{fs\_open} opens an existing file system while \texttt{fs\_make} creates a new file system of the specified type. \texttt{struct evfs\_filsys} allows developers to specify mount-time and make-time options, such as target device, block size, file system size, etc. File-system specific settings, such as inode size for Ext4, can also be specified if needed. However, suitable defaults are chosen by the implementation when these settings are omitted.
+
+\paragraph{Extent Functions} \texttt{extent\_alloc} allocates new extents, and returns error if extent is already fully or partially\footnote{It is possible for a developer to make a mistake and request extent allocation that partially overlaps an existing extent} allocated. If \textit{addr} is set to \texttt{EVFS\_ANY}, the implementaton is free to choose the address that satisfies the requested length, and the allocated address is returned. \texttt{extent\_active} can be used to verify that an extent is allocated, and \texttt{extent\_free} is used to free an allocated extent.
+
+\texttt{extent\_read} and \texttt{extent\_write} enable reading and writing content of an extent. These two functions can be used by applications that need to copy data blocks to a different loation, for example, to defragment the file system. Unlike reading an extent directly using the \texttt{read} system call on the storage device, \texttt{extent\_read} may involve translating address from logical to physical, as is the case for Btrfs with data striping and/or mirroring enabled. The same holds true for any use of \textit{addr} in the eVFS interface.
+
+% (jsun): from a design standpoint, should inode_unmap automatically free an 
+% extent that is no longer referenced? But extent_alloc allocates an initially
+% unreferenced extent, so this doesn't work unless inode_map automatically
+% "allocates" an extent if it were not allocated previously. Right now 
+% inode_unmap needs to be followed by if (extent_reverse() == 0) extent_free()
+% under all circumstances that I can think of.
+%
+\texttt{extent\_iterate} allows the application to iterate through all extents that is mapped to the inode. This function can be used to decide the fragmentation of a file. During the defragmentation process, \texttt{extent\_reverse} becomes crucial if the file system supports copy-on-write, because it returns all the inodes that currents map to the extent. If an extent is mapped to two or more inodes, then relocating the extent should not result in freeing the extent. 
+
+Lastly, \texttt{freesp\_iterate} can be used to generate a list of free space extents in the file system, which gives the application more control over extent allocation policy.
+
+\paragraph{Inode Functions} In a similar fashion, \texttt{inode\_alloc} and \texttt{inode\_free} allow allocation and deallocation of a specified inode number. \texttt{struct evfs\_inode} is a structure which contains generic inode fields, such as size, user id, permission, etc. It is used to initialize the fields of the inode, or update the inode in the case of \texttt{inode\_set}. \texttt{inode\_iterate} can be used to walk through all allocated inodes in the file system, and \texttt{inode\_active} can be used to check whether a specific inode number is in use. 
+
+\texttt{inode\_map} maps an extent to a logical offset in a file. This function should be used during relocation of blocks for defragmentation. \texttt{inode\_map} may create intermediate file system data structures such as indirect blocks to add the new mapping to the inode. \texttt{inode\_unmap} unmaps an extent from the file and makes the unmapped region of file sparse without changing the size of the file. As such \texttt{inode\_truncate} is necessary to actually reduce the number of blocks allocated to the inode, which may involve deallocation of intermediate file system structures.
+
+\paragraph{Directory Entry Functions} \texttt{dirent\_add} and \texttt{dirent\_remove} adds or removes directory entries from a directory inode, respectively. \texttt{struct evfs\_dirent} contains the inode number of the referenced inode, the file type, and the file name of the entry. \texttt{dirent\_add} returns an error when the file name already exists in the directory, which conforms with the behavior of all known file systems. \texttt{dirent\_active} checks if an entry exists, and \texttt{dirent\_iterate} iterates through all entries in a directory. 
+
+\paragraph{Transactional Functions} \texttt{txn\_begin} starts a transaction. All eVFS operations (including \texttt{fs\_make}) that are executed between a pair of \texttt{txn\_begin} and \texttt{txn\_commit} will part of the same transaction and be failure atomic. Transactional support is focal to the usability of the eVFS interface because eVFS operations alone can cause file system inconsistency or resource leaks. For example, allocating an extent without mapping the extent to a file causes resource leak, and creating a directory entry which references unused inode causes inconsistency.
+
+The interface allows multiple transactions to exist at once with full isolation semantic. As such, every eVFS operation starts with \texttt{struct evfs\_txn} as its first parameter (omitted in Table~\ref{tab:evfs-api} for brevity). Failure can thus occur during \texttt{txn\_commit} upon detecting conflict. The application is required to handle transcation error gracefully. Currently, file systems can choose to not implement support for multiple transactions. In this case, \texttt{txn\_begin} will return failure when a transaction is already outstanding.
+

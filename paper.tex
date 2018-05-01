@@ -1,0 +1,85 @@
+% This version uses the latex2e styles, not the very ancient 2.09 stuff.
+\documentclass[letterpaper,twocolumn,10pt]{article}
+\usepackage{usenix,epsfig,endnotes}
+\usepackage[english]{babel}
+\usepackage[bookmarks=true,pdfborder={0 0 0}]{hyperref}
+\usepackage{url}
+\usepackage[T1]{fontenc}
+\usepackage[latin9]{inputenc}
+\usepackage{color}
+\usepackage{array}
+\usepackage{textcomp}
+\usepackage{multirow}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{graphicx}
+\usepackage{makecell}
+\usepackage{enumitem}
+
+\makeatletter
+\providecommand{\tabularnewline}{\\}
+\date{}
+
+\renewcommand{\dblfloatpagefraction}{0.95}
+\renewcommand{\floatpagefraction}{0.95}
+
+\setlength{\belowcaptionskip}{-1ex}
+\usepackage{listings}
+\lstset{
+    basicstyle=\small\ttfamily,
+    tabsize=2,
+    columns=fullflexible,
+    keepspaces=true,
+    language=c
+}
+
+\renewcommand{\paragraph}{%
+  \@startsection{paragraph}{4}%
+  {\z@}{1ex \@plus 1ex \@minus .2ex}{-1em}%
+  {\normalfont\normalsize\bfseries}%
+}
+
+\makeatother
+\usepackage{listings}
+\renewcommand{\lstlistingname}{Listing}
+
+% (jsun): this disables page numbers
+%\pagestyle{empty}
+
+\begin{document}
+\title{\Large \bf Breaking Apart the VFS for Managing File Systems}
+\author{
+  {\rm Kuei Sun, Matthew Lakier, Angela Demke Brown and Ashvin Goel}\\
+  University of Toronto
+} % end author
+
+\maketitle
+
+\begin{abstract}
+File system management applications, such as data scrubbers, defragmentation tools, resizing tools, and partition editors, are essential for maintaining, optimizing, and administering storage systems. These applications require fine-grained control over file-system metadata and data, such as the ability to migrate a data block to another physical location. Such control is not available at the VFS API, and so these applications bypass the VFS and access and modify file-system metadata directly. As a result, these applications do not work across file systems, and must be developed from scratch for each file system, which involves significant engineering effort and impedes adoption of new file systems.
+
+Our goal is to design an interface that allows these management applications to be written once and be usable for all file systems that support the interface. Our key insight is that these applications operate on common file system abstractions, such as file system objects (e.g., blocks, inodes, and directory entries), and the mappings from logical blocks of a file to their physical locations. We propose the Extended Virtual File System (eVFS) interface that provides fine-grained access to these abstractions, allowing the development of generic file system management applications. We demonstrate the benefits of our approach by building a file-system agnostic conversion tool that performs in-place conversion of a source file system to a completely different destination file system, showing that arbitrary modifications to the file system format can be handled by the interface.
+
+\end{abstract}
+
+\input{introduction.tex}
+\input{approach.tex}
+\input{implementation.tex}
+\input{evaluation.tex}
+\input{related_work.tex}
+\input{future_work.tex}
+
+%% Ashvin - To ensure compatibility with existing applications, the operations are performed atomically using a transactional interface.
+
+% (jsun): which paper talks about running TM application with non-TM applications?
+
+\vspace{-0.75em}
+\section{Conclusion\label{sec:Conclusion}}
+
+The eVFS interface exposes a new, low-level file system abstraction that enables control over allocation and modification of extents, inodes, and directory entries, and the mapping between extents and inodes. These operations are necessary for building generic file system management applications that perform fine-grained updates to file system metadata. We showed the feasiblity of our approach by building a file system conversion tool. The application requires no changes to support a file system that implements the eVFS interface. We believe eVFS will enable many exciting applications and reduce the programming effort for building these applications.
+
+{\footnotesize \bibliographystyle{acm}
+\bibliography{bibliography}}
+
+\end{document}
+

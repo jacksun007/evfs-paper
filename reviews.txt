@@ -1,0 +1,224 @@
+Dear Kuei Sun,
+
+The 10th USENIX Workshop on Hot Topics in Storage and File Systems
+(HotStorage 2018) program committee is delighted to inform you that your
+paper #3 has been accepted to appear in the conference.
+
+       Title: Breaking Apart the VFS for Managing File Systems
+     Authors: Kuei Sun (University of Toronto)
+              Matthew Lakier (University of Toronto)
+              Angela Demke Brown (University of Toronto)
+              Ashvin Goel (University of Toronto)
+  Paper site: https://hotstorage18.usenix.hotcrp.com/paper/3?cap=03aVM1tCA2ovl8
+
+Your paper was one of 22 accepted out of 60 submissions. Congratulations!
+
+Reviews and comments on your paper are appended to this email. The
+submissions site also has the paper's reviews and comments, as well as more
+information about review scores.
+
+Final paper versions are due May 17, 2018.
+
+Please review the link below which has instructions for authors and
+speakers:
+https://www.usenix.org/conference/hotstorage18/instructions- authors
+
+If you need an invitation letter to apply for a visa to attend the
+conference, please contact conference@usenix.org as soon as possible. (Visa
+applications can take at least 30 working days to process.) Please identify
+yourself as a presenter and include your mailing address in your email.
+
+HotStorage 2018 also includes a Breakout session for controversial topics
+or emerging ideas. Submissions for Breakout topics are due June 14, 2018.
+
+Contact hotstorage18chairs@usenix.org with any questions or concerns.
+
+- HotStorage 2018 Submissions
+
+Review #3A
+===========================================================================
+
+Overall merit
+-------------
+4. Accept
+
+Reviewer expertise
+------------------
+3. Knowledgeable
+
+Paper summary
+-------------
+The authors present eVFS (Extended Virtual File System), an addition
+to the VFS API, which provide an abstract interface to the abstract
+data types (superblocks, inodes, directory entries, extents, etc) that
+are used to implement file systems.  The crucial aspect is the
+abstraction, which hides the details of the underlying representation,
+and allows movement between the different representations used by
+different file systems: for example, if you use the X file system eVFS
+method to read a dirent in variable foo, and the Y file system eVFS
+method to write foo as a dirent, then what will end up written is the
+Y representation of that dirent.
+
+The motivating application is a tool for migrating a volume from one
+file system to another.  This uses an interesting journaling method to
+ensure crash consistency that uses the free space from both file
+systems to store data to ensure crash consistency.  (discussing the
+details and limitations of this would, in my opinion, be an
+interesting topic for an expanded discussion)
+
+The current version only works on offline file systems, but this seems
+like a reasonable requirement.
+
+Comments for author
+-------------------
+This is a nice idea, and I can see some practical applications for
+eVFS.  It could provoke some interesting conversations at the
+workshop.
+
+The paper does not convince me of the generality of the approach,
+however, and omits some data that I think would make the paper
+stronger.  I would hope to see the issues I list below addressed in
+the final version of the paper, if possible.
+
+- Some file systems provide capabilities that are not always expressed
+  easily in VFS, (for example, immutable snapshots, or per-user
+  quotas) and I'm not sure how they're captured by eVFS.  It would
+  informative to add a discussion of what would happen if a ZFS volume
+  was translated to an ext4 volume, for example: would the .zfs
+  directory be there in the ext4 version, and would its contents be
+  strict snapshots, or would any information be lost.  (and if that
+  volume was translated back to ZFS, would things end up where they
+  started, or would any other info be lost?)
+
+- Examples of other management tools besides translating and resizing
+  volumes would be helpful.  Some file systems have sophisticated
+  management tools and it would be interesting to see whether these
+  can be written in terms of eVFS.
+
+- A benchmark or two would be compelling.  The easiest question is how
+  much faster is translating a file system with eVFS versus just doing
+  a tar.
+
+A few nits:
+
+- Table 1 does not fit within the margins; it needs to be narrowed.
+
+- I'd suggest that the types in the API should use system-independent
+  types, like loff_t or ssize_t, instead of long, but I guess it's no
+  worse than VFS in this respect.
+
+
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+
+Review #3B
+===========================================================================
+
+Overall merit
+-------------
+4. Accept
+
+Reviewer expertise
+------------------
+3. Knowledgeable
+
+Paper summary
+-------------
+This paper describes eVFS, a set of extensions to the VFS interface to allow file-system maintenance operations such as defrag and file system conversion to run without knowledge of the file system internals.  The API is atomic so that failures such as crashes or running out of space don't damage the file system.  There is an implementation of the interface for Ext4 and F2FS, and an generic in-place file system conversion tool that's used to convert between the two.
+
+Comments for author
+-------------------
+This is a good idea and a nice piece of work.
+
+My only real criticism is that a subset of what you're proposing has been in Windows since at least Windows XP (2001), and possibly longer than that.  Look up FSCTL_MOVE_FILE for the file system-agnostic defrag API.  Its implementation in NTFS is atomic, and it allows generic, online defrag tools that can't possibly damage the file system (though they could increase fragmentation if they wanted to).  Similarly, FSCTL_GET_RETREIVAL_POINTERS shows file mappings and FSCTL_GET_VOLUME_BITMAP shows free space.  Since these are implemented directly in the file system while it's running, you couldn't use them to change to a different file system, but they do have the flavor of what you're proposing here.
+
+How would you deal with file systems that don't correspond exactly to how things work in your API?  I could imagine log structured file systems that require very large, aligned log segments, for instance, and so some set-location type calls would fail.  NTFS will store the data for very small files inside the directory entry itself, so there is no block mapping for these files at all, so you couldn't find their data blocks in eVFS.  Or a file system that packs small files together into non-block aligned pieces.  I suppose these file systems could just fail the calls, but then you lose their benefit.
+
+
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+
+Review #3C
+===========================================================================
+
+Overall merit
+-------------
+4. Accept
+
+Reviewer expertise
+------------------
+4. Expert
+
+Paper summary
+-------------
+The authors propose providing a way to have standard API's for fixing file system metadata, etc.
+
+I think it is a large stretch to be able to do this given how differently the internal layout of file systems are (btrfs or zfs for example compared to VFAT), but it would be a fun and interesting talk.
+
+Comments for author
+-------------------
+I think it is a large stretch to be able to do this given how differently the internal layout of file systems are (btrfs or zfs for example compared to VFAT), but it would be a fun and interesting talk.
+
+
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+
+Review #3D
+===========================================================================
+
+Overall merit
+-------------
+2. Weak reject
+
+Reviewer expertise
+------------------
+3. Knowledgeable
+
+Paper summary
+-------------
+The paper proposes the addition of new apis to the vfs to allow file-system independent metadata operations. The reason these are useful is a lot of applications (like system maintenance, defraggers etc) require access to metadata to perform and the lack of generic apis require file-system specific implementations that is aware of the metadata layout. This automatically impairs portability and requires frequent reimplementation.
+
+The APIs proposed exposes the core metadata components (inodes, dentrys, blocks and extents) as well as providing a transactional interface to help maintain consistency. The paper also demonstrates the use of these apis in an offline file-system conversion tool.
+
+Positives
+1. Interesting problem and a fairly unique solution.
+2. The notion of having transaction is critical when allowing access to metadata.
+3. The API looks thorough/complete. 
+
+Negatives
+1. Transactions are the single most interesting topic in this paper - but the overall treatment was found lacking. 
+2. The system seems easy to grok in an offline setting - the online is a whole different beast and would have been another venue of making the overall work more interesting. 
+3. In the online scenario, it feels like vfs will need more changing - an online transaction will require interaction with other data-path APIs as well and the ability to scale such transaction is debatable
+4. By exposing metadata apis, this work transfers the control/safety of operations to user level code - this is extremely risky and has the potential to leave the overall system unstable in the event of incorrect usage (of transactions).
+
+Comments for author
+-------------------
+the paper would have been stronger with a deeper focus on transactions and its implications on online operations. The offline case is relatively straightforward to think about. One may also argue that the tradeoff of performance versus reimplementation effort that comes with generic applications (as compared to file system specific applications) is something that is not always straightforward: it may be cheaper to rewrite applications one time than suffer a performance hit every time.
+
+Comment @A1 by Reviewer A
+---------------------------------------------------------------------------
+The PC discussion of this paper centered on questioning whether eVFS is general: does it work for file systems that use VFS, but internally are very different?  Are there file systems that use VFS but are too "different" to support eVFS in a useful degree?  Adding information about how VFS can support different file systems would strengthen the final version of the paper.
+
+There was also some skepticism about whether eVFS could support online modifications to the file system.  The question again is whether there are complexities hidden in the details of online modifications to file systems that make it unexpectedly difficult.  Anything that can added about the approach to online changes, and any known limitations (for example, perhaps there is only a subset of operations that can be performed against online file systems--and if so, what are they?).  One particular difficulty that was mentioned in the discussion is the necessity of making these operations (or possibly sequences of operations) transactional, in order to prevent leaving the file system in an inconsistent state if the system crashed (or there was any other error) during the operation.
+
+E-mail from Shepherd
+--------------------
+Hi all,
+
+Congrats on your paper! It was very well received and in general well
+liked by the PC. It was agreed that VFS is due for an overhaul and the
+direction you guys took was correct.
+
+As you may have read from the reviews, the main concerns were around
+the general applicability of such APIs (say, file systems with very
+different internal layouts) and with the feasibility of the "online"
+notion that was briefly introduced.
+
+Can you please mail an overview of what you plan to address and lets
+take it from there?
+
+thanks and looking forward to your thoughts.
+-sriram
+
+
+

@@ -1,0 +1,66 @@
+\vspace{-0.75em}
+\section{Evaluation\label{sec:Evaluation}}
+
+In this section, we evaluate the programming effort needed to build the in-place file system conversion tool. The file system conversion tool is based on our previous work~\cite{sun2018spiffy}, and redesigning the application to use the eVFS interface did not result in statistically significant changes to its performance, and so we omit the discussion of our performance results.
+
+%\subsection{Programming Effort}
+
+\begin{table}
+\begin{centering}
+
+\begin{tabular}{|llc|llc|}
+\hline 
+\multicolumn{3}{|c|}{\textbf{Spiffy Converter}} & \multicolumn{3}{c|}{\textbf{eVFS Converter}}\tabularnewline
+\hline 
+\multicolumn{3}{|l|}{Application} & \multicolumn{3}{l|}{Application}\tabularnewline
+~ & Generic & 504 & ~ & Generic & 224\tabularnewline
+ & Ext4 & 218 &  & Ext4 & -\tabularnewline
+ & F2FS & 1780 &  & F2FS & -\tabularnewline
+\hline 
+\multicolumn{3}{|l|}{Libraries} & \multicolumn{3}{l|}{Libraries}\tabularnewline
+ & Generic & 2250 &  & Generic & 2625\tabularnewline
+ & Journaling & - &  & Journaling & 1350\tabularnewline
+ & Ext4 & - &  & Ext4 & 276\tabularnewline
+ & F2FS & - &  & F2FS & 2152\tabularnewline
+\hline 
+\end{tabular}
+
+\par\end{centering}
+\vspace{-5pt}
+\caption{\label{tab:programming-effort}Lines of code for the Spiffy and the eVFS file-system conversion tools.}
+\vspace{-5pt}
+\end{table}
+
+Table~\ref{tab:programming-effort} shows the programming effort for building the file-system conversion tool using the Spiffy framework~\cite{sun2018spiffy} (Spiffy converter) and the eVFS interface (eVFS converter). Both the converters use the same logic, but the Spiffy converter's application code uses 2502 lines, which includes almost 2000 lines of file-system specific code, and this converter can only convert from Ext4 to F2FS. The eVFS converter uses 224 lines of generic file-system conversion code, less than 10\% of the Spiffy application), and could be used to convert between any pair of file systems that implement the eVFS API. The libraries used by both applications provide generic code (e.g., bitmaps, hash tables, etc.) for supporting management applications. The file-system specific code used by the eVFS converter is part of the eVFS library and can be used by other management applications. Unlike the Spiffy converter, the eVFS converter is crash-consistent, requiring 1350 lines of journaling code.
+  
+\iffalse
+\subsection{Performance}
+
+\begin{table}
+\begin{centering}
+\begin{tabular}{|c||c|c|}
+\hline 
+\# of files & Copy Converter & eVFS Converter \\
+\hline
+\hline 
+20000 & $188.17 \pm 3.65$s & $7.03 \pm 0.2$s  \\
+\hline 
+5000 & $190.28 \pm 2.15$s & $4.01 \pm 0.09$s \\
+\hline 
+1000 & $192.74 \pm 2.28$s & $3.84 \pm 0.03$s \\
+\hline
+100 & $195.11 \pm 0.18$s & $3.71 \pm 0.13$s \\
+\hline 
+\end{tabular}
+\par\end{centering}
+\vspace{-5pt}
+\caption{\label{tab:fsconvert-result}Time required for each technique to convert 
+from Ext4 to F2FS for different number of files.}
+\vspace{-5pt}
+\end{table}
+
+We compare the time it takes to perform copy-based conversion, versus using our eVFS based file-system conversion tools. The results are shown in Table~\ref{tab:fsconvert-result}. The experiments are run on an Intel 510 Series SATA SSD.  We create the file set using Filebench 1.5-a3~\cite{wilson2008new} in an Ext4 partition on the SSD, and then convert the partition to F2FS. The 20K file set uses the~\texttt{msnfs} file size distribution with the largest file size up to 1GB. The rest of the file sets have progressively fewer small files. All file sets have a total size of 16GB. For the copy converter, we run \texttt{tar -aR} at the root of the SSD partition and save the tar file on a separate local disk. We then reformat the SSD partition and extract the file set back into the partition.
+
+The copy converter requires transferring two full copies of the file set, and so it takes 30x to 50x longer than using the conversion tool, which only needs to move data blocks out of locations that are used by the destination file system, and then create just the metadata for the destination file system. The conversion tool takes more time with larger file sets since it needs to convert more file system metadata. Overall, we show that applications written using the eVFS interface can achieve good performance.
+\fi
+
