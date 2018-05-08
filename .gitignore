@@ -7,3 +7,5 @@ paper.bbl
 paper.blg
 paper.pdf
 *draft*.pdf
+paper-diff*
+paper-full*
