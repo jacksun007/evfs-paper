@@ -11,8 +11,8 @@
 \hline
 \texttt{int super\_make(struct evfs\_super * sup)} & make new a file system with parameters specified by \textit{sup} \\
 \hline
-\texttt{int super\_set(struct evfs\_super * sup)} & update an existing file system's settings \\
-\hline
+%\texttt{int super\_set(struct evfs\_super * sup)} & update an existing file system's settings \\
+%\hline
 \hline 
 \texttt{s64 extent\_alloc(u64 addr, u64 len)} & allocate the extent defined by \{\textit{addr}, \textit{len}\} \\
 \hline 
@@ -53,8 +53,8 @@
 \makecell[l]{\texttt{int inode\_map(u64 ino\_nr, u64 log\_blk\_nr,} \\
 \hspace{7.3em}\texttt{u64 phy\_blk\_nr, u64 len)}} & \makecell[l]{map physical extent \{\textit{phy\_blk\_nr}, \textit{len}\} to the logical \\ extent \{\textit{log\_blk\_nr}, \textit{len}\} for inode \textit{ino\_nr}} \\
 \hline 
-\makecell[l]{\texttt{int inode\_unmap(s64 ino\_nr, u64 addr, u64 len)}} & \makecell[l]{unmap logical extent \{\textit{addr}, \textit{len}\} for inode \textit{ino\_nr}} \\
-\hline
+%\makecell[l]{\texttt{int inode\_unmap(s64 ino\_nr, u64 addr, u64 len)}} & \makecell[l]{unmap logical extent \{\textit{addr}, \textit{len}\} for inode \textit{ino\_nr}} \\
+%\hline
 % (jsun): removed because not discussed or motivated in approach section
 %\texttt{long inode\_truncate(long ino\_nr, long nblks)} & reduce the number of used blocks for %\textit{ino\_nr} to \textit{nblks} \\
 %\hline 
@@ -79,29 +79,28 @@
 \hline 
 \texttt{int txn\_commit(struct evfs\_txn * txn)} & commit the transaction \textit{txn} \\
 \hline 
-\texttt{int txn\_abort(struct evfs\_txn * txn)} & abort the transaction \textit{txn} \\
-\hline
+%\texttt{int txn\_abort(struct evfs\_txn * txn)} & abort the transaction \textit{txn} \\
+%\hline
 \end{tabular}
 \end{small}
-\par\end{center}
+\end{center}
 \vspace{-15pt}
-\caption{\label{tab:evfs-api}eVFS API. Parameter \texttt{struct evfs\_txn} is omitted for all functions except for \texttt{fs\_open} and the last 2 transaction-related functions. All Functions return negative error code upon failure.}
+\caption{\label{tab:evfs-api}eVFS API. Parameter \texttt{struct evfs\_txn} is omitted for all functions except for \texttt{fs\_open} and the last 2 transaction-related functions.}
 \vspace{-6pt}
 \end{table*}
 
 \vspace{-0.5em}
 \section{Approach\label{sec:Approach}}
 
-The goal of designing the eVFS interface is to enable file-system agnostic management applications. As such, the interface must be generic while providing fine-grained control over the allocation of file system objects, and mappings from one object to another (e.g. directory entries to files, files to blocks). Therefore, we must first define the various file system objects that are generic across file systems.
+The goal of designing the eVFS interface is to enable file-system agnostic management applications. As such, the interface must be generic while providing fine-grained control over the allocation of file system objects, and mappings from one object to another (e.g. directory entries to files, files to blocks). Therefore, we must define the various objects that are generic across file systems.
 
 At a high level, file systems manage four types of objects: files or directories, blocks or extents, directory entries, and file-system wide settings (such as the block size, file system size, or label). Thus, we provide an interface for managing each of the objects, and any mappings between them. In this section, we motivate the eVFS design by describing use cases for accessing and manipulating these objects, including the need for transactional support.
 
-\paragraph{Inodes} In the eVFS interface, similar to VFS, every file system object, such as a file or directory, is uniquely identified by an inode number and structure. File system management applications frequently need to read, create or update inode structures and their mappings to physical blocks.
-For example, a defragmentation tool needs to scatter-gather fragmented blocks of a file into a new contiguous extent, which involves updating the logical to physical block mappings of an inode. The eVFS interface thus provides support for allocating and updating an inode. The inode allocation interface is finer-grained than VFS file creation, since it does not allocate a directory entry or file blocks. The eVFS interface also allows mapping and unmapping logical offsets of a file to specific physical blocks, providing precise control over these mappings.
+\paragraph{Inodes} In the eVFS interface, similar to VFS, every file system object, such as a file or directory, is uniquely identified by an inode number and structure. File system management applications frequently need to read, create or update inode structures and their mappings to physical blocks. For example, a defragmentation tool needs to scatter-gather fragmented blocks of a file into a new contiguous extent, which involves updating the logical to physical block mappings of an inode. The eVFS interface thus provides support for allocating and updating an inode. The inode allocation interface is finer-grained than VFS file creation, since it does not allocate a directory entry or file blocks. The eVFS interface also allows mapping and unmapping logical offsets of a file to specific physical blocks, providing precise control over these mappings.
 
 \paragraph{Blocks and Extents} Many file system management applications require fine-grained control over the physical layout of a file on disk. For example, an in-place file system conversion tool needs to recreate files on the destination file system that directly map to existing data blocks belonging to the same files on the source file system, while avoiding copying blocks as much as possible (see Section~\ref{subsec:conversion_tool} for more detail). Thus, the interface allows allocation of blocks and extents at specific physical addresses.
 
-To allocate blocks and extents, management applications need to know the locations and sizes of free spaces. Maintenance applications also require knowledge of the remaining free space in the file system to determine whether to start garbage collection. This information must be obtained by processing block allocation metadata and is thus a file-system specific operation. However, with eVFS, we abstract away the file-system specific details and provide a function that enables applications to iterate through all free space extents in a file system, or find the nearest available free extent, without needing to know the format of the file system. Similarly, the API allows applications to check whether an extent is currently in use.
+To allocate blocks and extents, applications need to know the locations and sizes of free spaces. Maintenance applications also require knowledge of the remaining free space in the file system to determine whether to start garbage collection. This information must be obtained by processing block allocation metadata and is thus a file-system specific operation. However, with eVFS, we abstract away the file-system specific details and provide a function that enables applications to iterate through all free space extents in a file system, without needing to know the format of the file system. The API also allows applications to find the nearest available free extent, or to check whether an extent is currently in use.
 
 % This function helps the file system conversion tool detect when an extent must be copied elsewhere due to conflict.
 
