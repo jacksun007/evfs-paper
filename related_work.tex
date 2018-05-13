@@ -1,5 +1,6 @@
-\vspace{-0.75em}
+\vspace{-0.7em}
 \section{Related Work\label{sec:Related_Work}}
+\vspace{-0.4em}
 
 We had previously built a file system conversion tool using the Spiffy framework~\cite{sun2018spiffy}. Spiffy uses an annotation language to enable complete specification of the file system format and then generates a robust library for parsing and serializing the file system data structures. However, Spiffy only helps identify the types of these structures, and not their semantics, and thus still requires significant file-system specific code. In contrast, the eVFS interface is generic across file systems. In this work, we use Spiffy for the file-system specific implementation of the eVFS API, thus ensuring a robust implementation.
 
@@ -15,4 +16,3 @@ The \texttt{DeviceIoControl} function in the Win32 API supports many control cod
 
 Many existing works extended storage interfaces to simplify writing file systems, while improving their reliability~\cite{Sivathanu06}, security, functionality~\cite{shin2016isotope}, or performance~\cite{zhang2012nameless,anand08rangewrites}. Our work is similar in spirit to these works in that we have extended the file system interface to reduce the effort of building file system management applications. However, instead of pushing the decision making down to the lower layer, we instead expose previously internal operations in the file system, thus enabling applications that require more fine-grained control over the file system.
 
-\vspace{-1ex}

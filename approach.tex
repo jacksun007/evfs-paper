@@ -1,3 +1,28 @@
+\vspace{-0.7em}
+\section{Approach\label{sec:Approach}}
+\vspace{-0.4em}
+
+The goal of designing the eVFS interface is to enable file-system agnostic management applications. As such, the interface must be generic while providing fine-grained control over the allocation of file system objects, and mappings from one object to another (e.g. directory entries to files, files to blocks). Therefore, we must define the various objects that are generic across file systems.
+
+At a high level, file systems manage four types of objects: files or directories, blocks or extents, directory entries, and file-system wide settings (such as the block size, file system size, or label). Thus, we provide an interface for managing each of the objects, and any mappings between them. In this section, we motivate the eVFS design by describing use cases for accessing and manipulating these objects, including the need for transactional support.
+
+\vspace{-0.25em}
+\paragraph{Inodes} In the eVFS interface, similar to VFS, every file system object, such as a file or directory, is uniquely identified by an inode number and structure. File system management applications frequently need to read, create or update inode structures and their mappings to physical blocks. For example, a defragmentation tool needs to scatter-gather fragmented blocks of a file into a new contiguous extent, which involves updating the logical to physical block mappings of an inode. The eVFS interface thus provides support for allocating and updating an inode. The inode allocation interface is finer-grained than VFS file creation, since it does not allocate a directory entry or file blocks. The eVFS interface also allows mapping and unmapping logical offsets of a file to specific physical blocks, providing precise control over these mappings.
+
+\vspace{-0.25em}
+\paragraph{Blocks and Extents} Many file system management applications require fine-grained control over the physical layout of a file on disk. For example, an in-place file system conversion tool needs to recreate files on the destination file system that directly map to existing data blocks belonging to the same files on the source file system, while avoiding copying blocks as much as possible (see Section~\ref{subsec:conversion_tool} for more detail). Thus, the interface allows allocation of blocks and extents at specific physical addresses.
+
+To allocate blocks and extents, applications need to know the locations and sizes of free spaces. Maintenance applications also require knowledge of the remaining free space in the file system to determine whether to start garbage collection. This information must be obtained by processing block allocation metadata and is thus a file-system specific operation. However, with eVFS, we abstract away the file-system specific details and provide a function that enables applications to iterate through all free space extents in a file system, without needing to know the format of the file system. The API also allows applications to find the nearest available free extent, or to check whether an extent is currently in use.
+
+% This function helps the file system conversion tool detect when an extent must be copied elsewhere due to conflict.
+
+% (Ashvin): clarify the reason for the skip. given the reverse interface, is it always possible to move extents? clarify. the power of the reverse interface is not clear right now. In particular, for copy-on-write and log-structured file systems, moving a block might require updates to the parent, which requires progressively updating the parent pointers, etc. do we simplify that? support that?
+
+For file systems that support copy-on-write semantics and snapshots, management applications can make informed decisions based on whether an extent is private to a file or shared by multiple files. For example, it is easier to relocate private extents during garbage collection. To enable such logic, the interface supports retrieving a reverse mapping that lists the inodes and their logical offsets that map to a particular extent. With this information, a defragmentation tool can move an extent by remapping all inodes that reference the extent to its new location.
+
+\vspace{-0.25em}
+\paragraph{Directory Entries} File systems use directory entries to support mapping name(s) to an inode. Consider our in-place file system conversion tool that needs to recreate directories. It must iterate through the entries in the source file system while making copies to the destination file system. Therefore, the interface supports adding, updating, or removing individual directory entries, as well as iterating through the entries of a directory inode.
+
 \begin{table*}
 \begin{center}
 \begin{small}
@@ -84,37 +109,17 @@
 \end{tabular}
 \end{small}
 \end{center}
-\vspace{-15pt}
+\vspace{-16pt}
 \caption{\label{tab:evfs-api}eVFS API. Parameter \texttt{struct evfs\_txn} is omitted for all functions except for \texttt{fs\_open} and the last 2 transaction-related functions.}
 \vspace{-6pt}
 \end{table*}
 
-\vspace{-0.5em}
-\section{Approach\label{sec:Approach}}
 
-The goal of designing the eVFS interface is to enable file-system agnostic management applications. As such, the interface must be generic while providing fine-grained control over the allocation of file system objects, and mappings from one object to another (e.g. directory entries to files, files to blocks). Therefore, we must define the various objects that are generic across file systems.
-
-At a high level, file systems manage four types of objects: files or directories, blocks or extents, directory entries, and file-system wide settings (such as the block size, file system size, or label). Thus, we provide an interface for managing each of the objects, and any mappings between them. In this section, we motivate the eVFS design by describing use cases for accessing and manipulating these objects, including the need for transactional support.
-
-\paragraph{Inodes} In the eVFS interface, similar to VFS, every file system object, such as a file or directory, is uniquely identified by an inode number and structure. File system management applications frequently need to read, create or update inode structures and their mappings to physical blocks. For example, a defragmentation tool needs to scatter-gather fragmented blocks of a file into a new contiguous extent, which involves updating the logical to physical block mappings of an inode. The eVFS interface thus provides support for allocating and updating an inode. The inode allocation interface is finer-grained than VFS file creation, since it does not allocate a directory entry or file blocks. The eVFS interface also allows mapping and unmapping logical offsets of a file to specific physical blocks, providing precise control over these mappings.
-
-\paragraph{Blocks and Extents} Many file system management applications require fine-grained control over the physical layout of a file on disk. For example, an in-place file system conversion tool needs to recreate files on the destination file system that directly map to existing data blocks belonging to the same files on the source file system, while avoiding copying blocks as much as possible (see Section~\ref{subsec:conversion_tool} for more detail). Thus, the interface allows allocation of blocks and extents at specific physical addresses.
-
-To allocate blocks and extents, applications need to know the locations and sizes of free spaces. Maintenance applications also require knowledge of the remaining free space in the file system to determine whether to start garbage collection. This information must be obtained by processing block allocation metadata and is thus a file-system specific operation. However, with eVFS, we abstract away the file-system specific details and provide a function that enables applications to iterate through all free space extents in a file system, without needing to know the format of the file system. The API also allows applications to find the nearest available free extent, or to check whether an extent is currently in use.
-
-% This function helps the file system conversion tool detect when an extent must be copied elsewhere due to conflict.
-
-% (Ashvin): clarify the reason for the skip. given the reverse interface, is it always possible to move extents? clarify. the power of the reverse interface is not clear right now. In particular, for copy-on-write and log-structured file systems, moving a block might require updates to the parent, which requires progressively updating the parent pointers, etc. do we simplify that? support that?
-
-For file systems that support copy-on-write semantics and snapshots, management applications can make informed decisions based on whether an extent is private to a file or shared by multiple files. For example, it is easier to relocate private extents during garbage collection. To enable such logic, the interface supports retrieving a reverse mapping that lists the inodes and their logical offsets that map to a particular extent. With this information, a defragmentation tool can move an extent by remapping all inodes that reference the extent to its new location.
-
-\paragraph{Directory Entries} File systems use directory entries to support mapping name(s) to an inode. Consider our in-place file system conversion tool that needs to recreate directories. It must iterate through the entries in the source file system while making copies to the destination file system. Therefore, the interface supports adding, updating, or removing individual directory entries, as well as iterating through the entries of a directory inode.
-
+\vspace{-0.25em}
 \paragraph{File-System Wide Settings} A file system stores various parameters and options that describe the file system format and the features that are supported. Some of these parameters are common across different file systems, such as the total size of the file system, block size, etc. Therefore, they can be exposed to support management applications that modify the layout or format of the file system (e.g., updating file system to a newer version, changing the block size of an existing file system).
 
 The eVFS interface provides generic support for managing file-system wide settings in two ways. First, it allows updating simple settings such as labels or file system feature flags that do not require restructuring the file system, similar to the functionality provided by \texttt{tune2fs}~\cite{tso-e2fsprogs} for the Ext3/Ext4 file systems. Second, to support generic restructuring, the interface provides support for creating an empty file system, that performs the same task as \texttt{mkfs}. As described later in more detail, this interface allows our in-place file system conversion tool to reformat the device to the destination file system, and then the new file system metadata can be recreated, while keeping the file contents of the existing file system intact. Similarly, a file system can be resized using this approach, although less efficiently than a custom file-system specific resizing tool.
 
+\vspace{-0.25em}
 \paragraph{Transactions} Since many of the operations supported by the interface make the file system temporarily inconsistent, the interface also provides transactional support to ensure atomicity so that other applications do not see partial updates made by management applications. Transactional support is also necessary for providing crash consistency, which is often missing in management applications~\cite{gatla2018fsck}. Thus, eVFS also enables building robust management applications that are resilient to power failures.
-
-
 

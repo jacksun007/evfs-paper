@@ -1,13 +1,12 @@
-\vspace{-0.75em}
+\vspace{-0.7em}
 \section{Evaluation\label{sec:Evaluation}}
+\vspace{-0.4em}
 
 In this section, we evaluate the programming effort needed to build the in-place file system conversion tool, and the performance cost of adding journaling to the conversion tool. Evaluation comparing copy-based conversion versus the in-place conversion tool can be found in our previous work~\cite{sun2018spiffy}.
 
 %The file system conversion tool is based on our previous work~\cite{sun2018spiffy}, and redesigning the application to use the eVFS interface did not result in statistically significant changes to its performance, and so we omit the discussion of our performance results.
 
 %\subsection{Programming Effort}
-
-\paragraph{Programming Effort} Table~\ref{tab:programming-effort} shows the programming effort for building the file-system conversion tool using the Spiffy framework~\cite{sun2018spiffy} (Spiffy converter) and the eVFS interface (eVFS converter). Both the converters use the same logic, but the Spiffy converter's application code uses 2502 lines, which includes almost 2000 lines of file-system specific code, and this converter can only convert from Ext4 to F2FS. The eVFS converter uses 224 lines of generic file-system conversion code, less than 10\% of the Spiffy application, and could be used to convert between any pair of file systems that implement the eVFS API. The libraries used by both applications provide generic code (e.g., bitmaps, hash tables, etc.) for supporting management applications. The file-system specific code used by the eVFS converter is part of the eVFS library and can be used by other management applications. Unlike the Spiffy converter, the eVFS converter is crash-consistent, requiring 1350 lines of journaling code.
 
 \begin{table}
 \begin{small}
@@ -34,8 +33,12 @@ In this section, we evaluate the programming effort needed to build the in-place
 \caption{\label{tab:programming-effort}Lines of code for the Spiffy and the eVFS file-system conversion tools.}
 \vspace{-5pt}
 \end{table}
+
+\vspace{-0.25em}
+\paragraph{Programming Effort} Table~\ref{tab:programming-effort} shows the programming effort for building the file-system conversion tool using the Spiffy framework~\cite{sun2018spiffy} (Spiffy converter) and the eVFS interface (eVFS converter). Both the converters use the same logic, but the Spiffy converter's application code uses 2502 lines, which includes almost 2000 lines of file-system specific code, and this converter can only convert from Ext4 to F2FS. The eVFS converter uses 224 lines of generic file-system conversion code, less than 10\% of the Spiffy application, and could be used to convert between any pair of file systems that implement the eVFS API. The libraries used by both applications provide generic code (e.g., bitmaps, hash tables, etc.) for supporting management applications. The file-system specific code used by the eVFS converter is part of the eVFS library and can be used by other management applications. Unlike the Spiffy converter, the eVFS converter is crash-consistent, requiring 1350 lines of journaling code.
   
 %\subsection{\label{tab:journal-performance}Journaling Performance}
+\vspace{-0.25em}
 \paragraph{Journaling Performance} We compare the time it takes to run the conversion tool with and without journaling. We created a 128GB Ext4 partition with 20000 files that use a total of 64GB. On average, it took 13.68 seconds to complete the conversion with journaling, and 11.41 seconds without journaling. We believe a 19.9\% overhead is an acceptable tradeoff for crash consistency.
 
 %We compare the time it takes to run the conversion tool with and without journaling. The experiments are run on a 10TB iSCSI drive connected through a 10Gb Ethernet to a storage server that has 256GB of memory and a software RAID-6 volume consisting of 13 Hitachi HDS721010 SATA2 7200 RPM disks. We created three 128GB Ext4 partitions and populate each with varying number of files, but fixed the total used space to 64GB (i.e., average file size decreases with more total number of files). We then run the two versions of the conversion tool on each partition setup.
@@ -61,10 +64,10 @@ In this section, we evaluate the programming effort needed to build the in-place
 \end{tabular}
 \end{small}
 \end{center}
-\vspace{-15pt}
+\vspace{-16pt}
 \caption{\label{tab:fsconvert-result}Time required to convert 
 from Ext4 to F2FS for different number of files, with and without journaling.}
-\vspace{-5pt}
+\vspace{-6pt}
 \end{table}
 
 \fi

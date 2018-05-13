@@ -14,6 +14,7 @@ paper.pdf: paper.tex
 
 clean:
 	latexmk -CA
+	rm paper.bbl paper-full*
 
 # You want latexmk to *always* run, because make does not have all the info.
 # Also, include non-file targets in .PHONY so they are run regardless of any

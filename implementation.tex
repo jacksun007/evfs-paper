@@ -1,5 +1,6 @@
-\vspace{-0.5em}
+\vspace{-0.7em}
 \section{Implementation\label{sec:Implementation}}
+\vspace{-0.4em}
 
 In this section, we present our prototype of the eVFS API and discuss our implementation of the API. Next, we describe the in-place file system conversion tool that we have built using the eVFS interface.
 
@@ -9,8 +10,9 @@ Table~\ref{tab:evfs-api} shows a partial set of functions in the eVFS API. These
 
 We have implemented a subset of the eVFS API for two file systems, the extent-based Ext4 file system, and the log-structured F2FS file system, which enables converting an Ext4 file system to an F2FS file system. Our current implementation only works for offline use, i.e., the application has exclusive access to the unmounted file system. The file-system specific implementation of the API uses the Spiffy framework~\cite{sun2018spiffy} that provides robust parsing and serialization libraries, helping avoid bugs while handling file system metadata.
 
-\vspace{-0.5em}
+\vspace{-0.4em}
 \subsection{File System Conversion Tool\label{subsec:conversion_tool}}
+\vspace{-0.1em}
 
 Converting an existing file system to a different file system is a tedious and time-consuming process that normally involves copying the full content of a file system to another disk, reformatting the disk, and then copying everything back to the new file system. In contrast, an in-place file system conversion only updates file system metadata, and does not move any regular file data unless its location must be used by statically allocated metadata of the destination file system. This technique can speed up the conversion dramatically. While some such conversion tools exist, they are hard to implement correctly\footnote{E.g. the \texttt{convertfs} utility \cite{convertfs} requires sparse file support on the source file system and performs full data copying} and not generally available.
 
@@ -22,11 +24,11 @@ A complication occurs when a block that is currently in use by the journal is al
 
 If the journaling layer runs out of free space, the conversion process is aborted. We guarantee that this error occurs before the transaction commits, so no data is lost on a conversion failure.
 
-Journaling enables converting large file systems since the source filesystem metadata can be read while the destination file system metadata is being written. In contrast, without journaling, all source file system metadata would need to be read into memory before starting conversion, or else the source metadata could be overwritten.
+An additional benefit of journaling is that the conversion tool can handle large file systems since the source filesystem metadata can be read while the destination file system metadata is being written. In contrast, without journaling, all source file system metadata would need to be read into memory before starting conversion, or else the source metadata could be overwritten.
 
 The conversion tool starts a new transaction and then creates an empty destination file system on the device storing the source file system. Next, it iterates through the inodes of the source file system and creates the corresponding inodes in the destination file system. For regular files, it iterates through each extent in the source inode, allocating the corresponding extent in the destination file system, and then copying over the mappings to the destination inode. For each extent, we check whether it overlaps with block(s) that are allocated in the destination file system. If so, we relocate the extent to free space in the destination file system, and update the inode that maps to this extent. For directories, we iterate through the entries to recreate them in the destination file system. Finally, we commit the transaction and allow checkpointing to create the destination file system. The commit information needs to be placed in a well-known location that is not in use by either file system. Currently, we use the boot record to store this information.
 
-Some source file systems may inline data inside metadata (e.g., Ext4's fast symlink) or perform subblock allocation (e.g., ReiserFS's tail packing). In these cases, the the conversion tool will need to copy the data using the eVFS read/write interface since the data is not mapped to an extent. When converting to a file system that lacks the feature of the source file system, some information may be lost. For example, converting a file system with immutable snapshots to Ext4 will result in a copy of the snapshots being created, since Ext4 does not support snapshots. 
+Some source file systems may inline data inside metadata (e.g., Ext4's fast symlink) or perform subblock allocation (e.g., ReiserFS's tail packing). In these cases, the conversion tool will need to copy the data using the eVFS read/write interface since the data is not mapped to an extent. When converting to a file system that lacks the feature of the source file system, some information may be lost. For example, converting a file system with immutable snapshots to Ext4 will result in a copy of the snapshots being created, since Ext4 does not support snapshots. 
 
 %Similarly, converting a file system with quota support to one that does not will result in the loss of quota-related metadata.
 
