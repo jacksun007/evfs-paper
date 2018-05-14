@@ -10,6 +10,8 @@ Table~\ref{tab:evfs-api} shows a partial set of functions in the eVFS API. These
 
 We have implemented a subset of the eVFS API for two file systems, the extent-based Ext4 file system, and the log-structured F2FS file system, which enables converting an Ext4 file system to an F2FS file system. Our current implementation only works for offline use, i.e., the application has exclusive access to the unmounted file system. The file-system specific implementation of the API uses the Spiffy framework~\cite{sun2018spiffy} that provides robust parsing and serialization libraries, helping avoid bugs while handling file system metadata.
 
+We are currently working on supporting other deployed VFS-based file systems, such as Btrfs and XFS. Since our API is generic, we believe it should be possible to extend it for non-VFS file systems as well.
+
 \vspace{-0.4em}
 \subsection{File System Conversion Tool\label{subsec:conversion_tool}}
 \vspace{-0.1em}

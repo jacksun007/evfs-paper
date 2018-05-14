@@ -1,3 +1,94 @@
+\begin{table*}
+\begin{center}
+\begin{small}
+\begin{tabular}[t]{|l|l|}
+\hline 
+\textbf{Function Prototype} & \textbf{Description} \\
+\hline
+\hline
+\texttt{struct evfs * fs\_open(struct evfs\_mount * mnt)} & open the file system with parameters specified by \textit{mnt} \\
+\hline
+\hline
+\texttt{struct evfs\_txn * txn\_begin(struct evfs * evfs)} & start a new transaction and return the associated handle \\
+\hline 
+\texttt{int txn\_commit(struct evfs\_txn * txn)} & commit the transaction \textit{txn} \\
+\hline 
+\texttt{int txn\_abort(struct evfs\_txn * txn)} & abort the transaction \textit{txn} \\
+\hline
+\hline
+\texttt{int super\_make(struct evfs\_super * sup)} & make new a file system with parameters specified by \textit{sup} \\
+\hline
+%\texttt{int super\_set(struct evfs\_super * sup)} & update an existing file system's settings \\
+%\hline
+\hline 
+\texttt{s64 extent\_alloc(u64 addr, u64 len)} & allocate the extent defined by \{\textit{addr}, \textit{len}\} \\
+\hline 
+\texttt{long extent\_free(long addr, long len)} & free the extent defined by \{\textit{addr}, \textit{len}\} \\
+\hline 
+% (jsun): removed because not discussed or motivated in approach section
+%\texttt{long extent\_write(long addr, long len, char * data)} & write \textit{data} to the extent defined by \{\textit{addr}, \textit{len}\} \\
+%\hline 
+%\texttt{long extent\_read(long addr, long len, char * data)} & read \textit{data} from the extent defined by \{\textit{addr}, \textit{len}\} \\
+%\hline 
+\makecell[l]{\texttt{s64 extent\_reverse(u64 addr, u64 len,} \\
+\hspace{1em}\texttt{struct evfs\_reverse * rv)}} & \makecell[l]{fills \textit{rv} with the inode number and logical offset of \\ all inodes that map to the extent defined by \{\textit{addr}, \textit{len}\}} \\
+\hline 
+\texttt{int extent\_active(u64 addr, u64 len)} & return 1 if extent defined by \{\textit{addr}, \textit{len}\} is active, else 0 \\
+\hline 
+\makecell[l]{\texttt{s64 extent\_iterate(s64 ino\_nr, void * priv,} \\ 
+\hspace{1em}\texttt{s64 (* cb)(u64 log\_blk\_nr, u64 phy\_blk\_nr,} \\
+\hspace{6.75em}\texttt{u64 len, void * priv))}} & \makecell[l]{iterate through all extents mapped to inode \textit{ino\_nr} in \\ the form of \{\textit{log\_blk\_nr}, \textit{len}\} $\rightarrow$ \{\textit{phy\_blk\_nr}, \textit{len}\} \\ and process them via callback function \textit{cb}} \\
+\hline 
+\makecell[l]{\texttt{s64 freesp\_iterate(void * priv, s64 (* cb)(} \\ 
+\hspace{1em}\texttt{u64 addr, u64 len, void * priv))}} & \makecell[l]{iterate through all free space extents in the file system \\ and process them via callback function \textit{cb}} \\
+\hline
+\hline
+\texttt{s64 inode\_alloc(s64 ino\_nr, struct evfs\_inode * i)} & allocate the inode \textit{ino\_nr} with the inode structure \textit{i} \\
+\hline 
+\texttt{long inode\_free(long ino\_nr)} & free the inode \textit{ino\_nr} \\
+\hline 
+\makecell[l]{\texttt{s64 inode\_read(s64 ino\_nr, s64 ofs, char * data,} \\
+\hspace{7.85em}\texttt{u64 len)}} & \makecell[l]{read \textit{len} byte of data to \textit{data}
+ from the inode \textit{ino\_nr} \\ at logical offset \textit{ofs}} \\
+\hline 
+% (jsun): removed because not significant
+%\makecell[l]{\texttt{long inode\_write(long ino\_nr, long ofs, char * data,} \\
+%\hspace{1em}\texttt{long len)}} & \makecell[l]{write \textit{data} of \textit{len} byte to the inode \textit{ino\_nr} at logical \\ offset \textit{ofs}} \\
+%\hline 
+%\texttt{long inode\_set(long ino\_nr, struct evfs\_inode * i)} & set the inode \textit{ino\_nr} with the inode structure \textit{i} \\
+%\hline
+\makecell[l]{\texttt{int inode\_map(u64 ino\_nr, u64 log\_blk\_nr,} \\
+\hspace{7.35em}\texttt{u64 phy\_blk\_nr, u64 len)}} & \makecell[l]{map physical extent \{\textit{phy\_blk\_nr}, \textit{len}\} to the logical \\ extent \{\textit{log\_blk\_nr}, \textit{len}\} for inode \textit{ino\_nr}} \\
+\hline 
+%\makecell[l]{\texttt{int inode\_unmap(s64 ino\_nr, u64 addr, u64 len)}} & \makecell[l]{unmap logical extent \{\textit{addr}, \textit{len}\} for inode \textit{ino\_nr}} \\
+%\hline
+% (jsun): removed because not discussed or motivated in approach section
+%\texttt{long inode\_truncate(long ino\_nr, long nblks)} & reduce the number of used blocks for %\textit{ino\_nr} to \textit{nblks} \\
+%\hline 
+%\texttt{int inode\_active(long ino\_nr)} & returns 1 if inode \textit{ino\_nr} is active, else 0 \\
+%\hline 
+\makecell[l]{\texttt{s64 inode\_iterate(void * priv, s64 (* cb)(} \\ 
+\hspace{1em}\texttt{s64 ino\_nr, struct evfs\_inode * i, void * priv))}} & \makecell[l]{iterate through all active inodes in the file system and \\ process them via callback function \textit{cb}} \\
+\hline
+\hline
+\texttt{int dirent\_add(s64 dir\_nr, struct evfs\_dirent * d)} & add a new entry \textit{d} to directory inode \textit{dir\_nr} \\
+\hline 
+%\texttt{long dirent\_remove(long dir\_nr, long ino\_nr)} & remove entry \textit{ino\_nr} from directory inode \textit{dir\_nr} \\
+%\hline 
+% (jsun): removed because not significant
+%\texttt{long dirent\_active(long dir\_nr, long ino\_nr)} & returns 1 if entry \textit{ino\_nr} exists in \textit{dir\_nr}, else 0 \\
+%\hline 
+\makecell[l]{\texttt{s64 dirent\_iterate(s64 dir\_nr, void * priv,} \\ 
+\hspace{1em}\texttt{s64 (* cb)(struct evfs\_dirent * d, void * priv))}} & \makecell[l]{iterate through all directory entries for inode \textit{dir\_nr} \\ and process them via callback function \textit{cb}} \\
+\hline
+\end{tabular}
+\end{small}
+\end{center}
+\vspace{-16pt}
+\caption{\label{tab:evfs-api}eVFS API. Parameter \texttt{struct evfs\_txn} is omitted for all functions except for the first four functions.}
+\vspace{-6pt}
+\end{table*}
+
 \vspace{-0.7em}
 \section{Introduction\label{sec:Introduction}}
 \vspace{-0.4em}
