@@ -20,6 +20,9 @@ To allocate blocks and extents, applications need to know the locations and size
 
 For file systems that support copy-on-write semantics and snapshots, management applications can make informed decisions based on whether an extent is private to a file or shared by multiple files. For example, it is easier to relocate private extents during garbage collection. To enable such logic, the interface supports retrieving a reverse mapping that lists the inodes and their logical offsets that map to a particular extent. A defragmentation tool can utilize this information to move an extent by remapping all inodes that reference the extent to its new location.
 
+% (Matthew)
+%Consider our in-place file system conversion tool. It must iterate through the directory entries (by iterating through directory inodes) in the source file system while making adding copies to the destination file system.
+
 \vspace{-0.25em}
 \paragraph{Directory Entries} File systems use directory entries to support mapping name(s) to an inode. Consider our in-place file system conversion tool that needs to recreate directories. It must iterate through the entries in the source file system while making copies to the destination file system. Therefore, the interface supports adding, updating, or removing individual directory entries, as well as iterating through the entries of a directory inode.
 
