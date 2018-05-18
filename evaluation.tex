@@ -39,7 +39,7 @@ In this section, we evaluate the programming effort needed to build the in-place
   
 %\subsection{\label{tab:journal-performance}Journaling Performance}
 \vspace{-0.25em}
-\paragraph{Journaling Performance} We compare the time it takes to run the conversion tool with and without journaling. We created a 128GB Ext4 partition with 20000 files that use a total of 64GB. On average, it took 13.68 seconds to complete the conversion with journaling, and 11.41 seconds without journaling. We believe a 20\% overhead is an acceptable tradeoff for crash consistency.
+\paragraph{Journaling Performance} We compare the time it takes to run the conversion tool with and without journaling. We created a 128GB Ext4 partition with 20000 files that use a total of 64GB. On average, it took 13.68 seconds to complete the conversion with journaling, and 11.41 seconds without journaling. We believe a 20\% overhead is an acceptable trade-off for crash consistency.
 
 %We compare the time it takes to run the conversion tool with and without journaling. The experiments are run on a 10TB iSCSI drive connected through a 10Gb Ethernet to a storage server that has 256GB of memory and a software RAID-6 volume consisting of 13 Hitachi HDS721010 SATA2 7200 RPM disks. We created three 128GB Ext4 partitions and populate each with varying number of files, but fixed the total used space to 64GB (i.e., average file size decreases with more total number of files). We then run the two versions of the conversion tool on each partition setup.
 
